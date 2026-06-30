@@ -31,10 +31,10 @@
 }
 #overlay.active {
   display: flex;
-  pointer-events: all;
+  pointer-events: auto;
 }
 #overlay button, #overlay a, #overlay select, #overlay input {
-  touch-action: manipulation;
+  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
 }
 #overlay input[type="number"], #overlay input[type="range"] {
@@ -2176,22 +2176,50 @@ requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
 
 // ============================================================
-//  BUTTON SYSTEM - click events only (iOS Safari compatible)
+//  BUTTON SYSTEM - direct touchend + click on buttons
 // ============================================================
-function btnAction(name) {
-  try {
-    if (typeof window[name] === 'function') window[name]();
-  } catch(e) { console.error('[BTN]', name, e); }
+function bindOverlayButtons() {
+  var overlay = document.getElementById('overlay');
+  if (!overlay) return;
+  var btns = overlay.querySelectorAll('button, .btn, .diff-btn');
+  btns.forEach(function(btn) {
+    // Bind touchend for instant iOS response
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      var action = this.dataset.action || this.getAttribute('onclick');
+      if (!action) return;
+      if (this.dataset.action && typeof window[this.dataset.action] === 'function') {
+        try { window[this.dataset.action](); } catch(err) { console.error('[BTN]', err); }
+      } else if (this.getAttribute('onclick')) {
+        try { eval(this.getAttribute('onclick')); } catch(err) { console.error('[BTN]', err); }
+      }
+    });
+    // Bind click for desktop/fallback
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var action = this.dataset.action || this.getAttribute('onclick');
+      if (!action) return;
+      if (this.dataset.action && typeof window[this.dataset.action] === 'function') {
+        try { window[this.dataset.action](); } catch(err) { console.error('[BTN]', err); }
+      } else if (this.getAttribute('onclick')) {
+        try { eval(this.getAttribute('onclick')); } catch(err) { console.error('[BTN]', err); }
+      }
+    });
+    console.log('[BTN] bound to:', btn.dataset.action || btn.getAttribute('onclick'));
+  });
 }
-document.getElementById('overlay').addEventListener('click', function(e) {
-  var b = e.target.closest('button, .btn, .diff-btn');
-  if (!b) return;
-  var a = b.dataset.action;
-  if (a) { btnAction(a); return; }
-  var oc = b.getAttribute('onclick');
-  if (oc) { try { eval(oc); } catch(e) { console.error('[BTN]', e); } }
-});
-console.log('[BTN] click handlers bound');
+
+// Bind initial buttons
+bindOverlayButtons();
+
+// Hook into showOverlay to rebind buttons after content change
+var _origShowOverlay = showOverlay;
+showOverlay = function(html) {
+  _origShowOverlay(html);
+  bindOverlayButtons();
+};
+
+console.log('[BTN] button system bound');
 </script>
 </body>
 </html>
