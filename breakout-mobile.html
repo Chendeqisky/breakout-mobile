@@ -433,6 +433,7 @@ document.body.addEventListener('touchmove', function(e) {
     return;
   }
   e.preventDefault();
+  e.stopPropagation();
 }, { passive: false });
 
 // Prevent double-tap to zoom on iOS
@@ -1901,6 +1902,7 @@ document.addEventListener('keyup', e => {
 // Touch controls
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
+  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   initAudio();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -1915,6 +1917,7 @@ canvas.addEventListener('touchstart', e => {
 
 canvas.addEventListener('touchmove', e => {
   e.preventDefault();
+  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   touchX = (touch.clientX - rect.left) * (W / rect.width);
@@ -1923,6 +1926,7 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
+  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   touchActive = false;
 }, { passive: false });
 
