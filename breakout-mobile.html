@@ -2165,68 +2165,31 @@ requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
 
 // ============================================================
-//  MOBILE BUTTON CLICK BINDING (fallback for onclick attributes)
+//  MOBILE BUTTON CLICK FIX - onclick delegation on overlay
 // ============================================================
 (function() {
-  // Bind overlay buttons by event delegation to avoid inline onclick issues
-  const overlay = document.getElementById('overlay');
+  var overlay = document.getElementById('overlay');
   if (overlay) {
-    overlay.addEventListener('pointerdown', function(e) {
-      const btn = e.target.closest('button');
+    overlay.addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
       if (!btn) return;
       
-      console.log('[DEBUG] button pointerdown:', btn.textContent.trim().substring(0, 20));
+      console.log('[CLICK] button clicked:', btn.textContent.trim().substring(0, 30));
+      console.log('[CLICK] button class:', btn.className);
+      console.log('[CLICK] button id:', btn.id);
+      console.log('[CLICK] button onclick attr:', btn.getAttribute('onclick'));
+      console.log('[CLICK] gameState:', gameState);
       
-      // Handle difficulty select button
-      if (btn.getAttribute('onclick')?.includes('showDifficultySelect')) {
+      // If button has onclick attribute, execute it directly
+      if (btn.getAttribute('onclick')) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[DEBUG] trigger showDifficultySelect');
-        try { showDifficultySelect(); } catch(err) { console.error('[DEBUG] showDifficultySelect ERROR:', err); }
-        return;
-      }
-      
-      // Handle start game button (mobile-start)
-      if (btn.id === 'mobile-start') {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[DEBUG] trigger startGame');
-        try { startGame(); } catch(err) { console.error('[DEBUG] startGame ERROR:', err); }
-        return;
-      }
-      
-      // Handle start from level button (in difficulty select)
-      if (btn.getAttribute('onclick')?.includes('startFromLevel')) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[DEBUG] trigger startFromLevel');
-        try { 
-          const match = btn.getAttribute('onclick').match(/startFromLevel\((\d+)\)/);
-          if (match) startFromLevel(parseInt(match[1])); 
-        } catch(err) { console.error('[DEBUG] startFromLevel ERROR:', err); }
-        return;
-      }
-      
-      // Handle showMenu button
-      if (btn.getAttribute('onclick')?.includes('showMenu')) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[DEBUG] trigger showMenu');
-        try { showMenu(); } catch(err) { console.error('[DEBUG] showMenu ERROR:', err); }
-        return;
-      }
-      
-      // Handle setDifficulty buttons
-      if (btn.classList.contains('diff-btn')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const text = btn.textContent.toLowerCase();
-        let diff = 'normal';
-        if (text.includes('简单')) diff = 'easy';
-        else if (text.includes('困难')) diff = 'hard';
-        else if (text.includes('挑战')) diff = 'challenge';
-        console.log('[DEBUG] setDifficulty:', diff);
-        try { setDifficulty(diff); } catch(err) { console.error('[DEBUG] setDifficulty ERROR:', err); }
+        console.log('[CLICK] executing onclick:', btn.getAttribute('onclick'));
+        try {
+          eval(btn.getAttribute('onclick'));
+        } catch(err) {
+          console.error('[CLICK] onclick error:', err.message);
+        }
         return;
       }
     });
@@ -2240,7 +2203,7 @@ updateHighScoreDisplay();
     console.error('[GLOBAL UNHANDLED REJECTION]', e.reason);
   });
   
-  console.log('[DEBUG] Script loaded, overlay:', !!document.getElementById('overlay'));
+  console.log('[INIT] Script loaded, overlay:', !!document.getElementById('overlay'), ', innerHTML:', document.getElementById('overlay') ? document.getElementById('overlay').innerHTML.substring(0, 100) : 'N/A');
 })();
 </script>
 </body>
