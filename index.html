@@ -18,6 +18,7 @@
     font-family: 'Courier New', monospace;
     color: #e0e0ff;
     overflow: hidden;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
     padding-top: env(safe-area-inset-top, 0px);
@@ -395,7 +396,7 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.5</span></h1>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
@@ -1630,7 +1631,7 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.5</span></h1>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
     <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
     <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
     <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
@@ -1648,7 +1649,7 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.5</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
         <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
