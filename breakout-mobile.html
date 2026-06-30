@@ -26,6 +26,17 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
+
+#overlay {
+  touch-action: auto;
+}
+#overlay button, #overlay a, #overlay select, #overlay input {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#overlay input[type="number"], #overlay input[type="range"] {
+  touch-action: pan-y;
+}
   #header {
     display: flex;
     justify-content: space-between;
