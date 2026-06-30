@@ -403,7 +403,7 @@
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
   <button class="btn" onclick="showDifficultySelect()">开始游戏</button>
-  <button class="btn" id="mobile-start" onclick="startGame()" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
+  <button class="btn" id="mobile-start" data-action="startGame" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
   <button class="btn secondary" onclick="showMenu()">主菜单</button>
 </div>
 
@@ -2168,7 +2168,17 @@ function nextLevel() {
 // Show mobile-specific UI elements
 if (isSmallScreen) {
   const mobileStart = document.getElementById('mobile-start');
-  if (mobileStart) mobileStart.style.display = 'inline-block';
+  if (mobileStart) {
+    mobileStart.style.display = 'inline-block';
+    mobileStart.addEventListener('touchstart', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      try { startGame(); } catch(err) { console.error('[MOBILE-START touch] error:', err); }
+    }, { passive: false });
+    mobileStart.addEventListener('click', function() {
+      try { startGame(); } catch(err) { console.error('[MOBILE-START click] error:', err); }
+    });
+  }
 }
 
 // Start the loop
@@ -2176,32 +2186,39 @@ requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
 
 // ============================================================
-//  MOBILE BUTTON CLICK FIX - onclick delegation on overlay
+//  MOBILE BUTTON CLICK FIX - touchstart + click delegation
 // ============================================================
 (function() {
   var overlay = document.getElementById('overlay');
   if (overlay) {
+    // touchstart handler: prevents canvas touch handlers from interfering
+    overlay.addEventListener('touchstart', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      if (!overlay.classList.contains('active')) return;
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      if (btn.getAttribute('onclick')) {
+        try { eval(btn.getAttribute('onclick')); } catch(err) { console.error('[TOUCH] error:', err.message); }
+      } else if (btn.dataset.action) {
+        try { window[btn.dataset.action](); } catch(err) { console.error('[TOUCH] error:', err.message); }
+      }
+    }, { passive: false });
+
+    // click handler: executes onclick attributes
     overlay.addEventListener('click', function(e) {
       var btn = e.target.closest('button');
       if (!btn) return;
+      if (!overlay.classList.contains('active')) return;
       
-      console.log('[CLICK] button clicked:', btn.textContent.trim().substring(0, 30));
-      console.log('[CLICK] button class:', btn.className);
-      console.log('[CLICK] button id:', btn.id);
-      console.log('[CLICK] button onclick attr:', btn.getAttribute('onclick'));
-      console.log('[CLICK] gameState:', gameState);
-      
-      // If button has onclick attribute, execute it directly
       if (btn.getAttribute('onclick')) {
-        e.preventDefault();
         e.stopPropagation();
-        console.log('[CLICK] executing onclick:', btn.getAttribute('onclick'));
-        try {
-          eval(btn.getAttribute('onclick'));
-        } catch(err) {
-          console.error('[CLICK] onclick error:', err.message);
-        }
+        try { eval(btn.getAttribute('onclick')); } catch(err) { console.error('[CLICK] error:', err.message); }
         return;
+      }
+      if (btn.dataset.action) {
+        e.stopPropagation();
+        try { window[btn.dataset.action](); } catch(err) { console.error('[CLICK] error:', err.message); }
       }
     });
   }
