@@ -329,15 +329,22 @@
     text-align: center;
   }
   @media (max-width: 850px) {
-    #header { width: 98vw; font-size: 12px; }
-    canvas { width: 98vw; height: auto; }
+    #header { width: min(98vw, 430px); font-size: 12px; padding: 6px 8px; }
+    #header span { flex: 1 1 30%; text-align: center; }
+    canvas { width: min(98vw, 430px); height: auto; }
     #overlay { padding: 10px; }
     #overlay h1 { font-size: 28px; }
     #overlay h2 { font-size: 18px; }
     #overlay p { font-size: 14px; }
     #overlay .btn { font-size: 15px; padding: 10px 16px; }
     #editor-panel { display: none; } /* hide editor on mobile */
-    #audio-controls { font-size: 10px; padding: 3px 6px; top: 4px; right: 4px; }
+    #audio-controls {
+      position: static;
+      align-self: flex-end;
+      margin: 0 max(1vw, 4px) 4px 0;
+      font-size: 10px;
+      padding: 3px 6px;
+    }
     #audio-controls input[type="range"] { width: 30px; }
     .stats-grid { max-width: 280px; }
     .stat-box .val { font-size: 20px; }
@@ -451,22 +458,32 @@ const particleCount = isMobilePerformance ? 6 : 12;
 const shakeFactor = isMobilePerformance ? 0.7 : 1.0;
 
 // Scale canvas for mobile
-function setupMobileLayout() {
+function setupMobileLayout(resizeBackingStore = false) {
   if (!isSmallScreen) return;
   const gameCanvas = document.getElementById('game');
   if (!gameCanvas) return;
+  const headerEl = document.getElementById('header');
+  const audioEl = document.getElementById('audio-controls');
   
-  // Calculate max canvas size that fits viewport
+  // Use a portrait playfield on phones instead of shrinking the desktop canvas.
   const maxW = window.innerWidth * 0.98;
-  const aspect = 800 / 560; // original aspect ratio
-  const canvasW = Math.min(maxW, 800);
-  const canvasH = canvasW / aspect;
+  const canvasW = Math.floor(Math.min(maxW, 430));
+  const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
+  const audioH = audioEl ? audioEl.getBoundingClientRect().height + 4 : 0;
+  const maxH = Math.max(320, window.innerHeight - headerH - audioH - 12);
+  const minH = Math.min(maxH, canvasW * 1.35);
+  const preferredH = Math.min(maxH, canvasW * 1.6);
+  const canvasH = Math.floor(Math.max(minH, preferredH));
   
+  if (resizeBackingStore) {
+    gameCanvas.width = canvasW;
+    gameCanvas.height = canvasH;
+  }
   gameCanvas.style.width = canvasW + 'px';
   gameCanvas.style.height = canvasH + 'px';
 }
-setupMobileLayout();
-window.addEventListener('resize', setupMobileLayout);
+setupMobileLayout(true);
+window.addEventListener('resize', () => setupMobileLayout(false));
 
 // ============================================================
 //  CANVAS & CONTEXT
@@ -967,7 +984,7 @@ function resetBall() {
 }
 
 function createPaddle() {
-  paddle.w = PADDLE_W_MAX;
+  paddle.w = Math.min(PADDLE_W_MAX, Math.max(PADDLE_W_MIN, W * 0.36));
   paddle.x = W / 2 - paddle.w / 2;
   paddle.y = H - 30;
 }
@@ -985,6 +1002,34 @@ function getBaseSpeed() {
   return (5 + Math.min(currentLevel * 0.3, 2)) * DIFFICULTY[difficulty].speedMult;
 }
 
+function getBrickMetrics(cols) {
+  if (!isSmallScreen) {
+    const bW = 68, bH = 22, padding = 4;
+    return {
+      bW,
+      bH,
+      padding,
+      offsetTop: 50,
+      offsetLeft: (W - (cols * (bW + padding) - padding)) / 2
+    };
+  }
+
+  const padding = 3;
+  const sideMargin = 12;
+  const availableW = Math.max(180, W - sideMargin * 2);
+  const bW = Math.max(18, Math.floor((availableW - (cols - 1) * padding) / cols));
+  const bH = Math.max(12, Math.min(20, Math.floor(bW * 0.55)));
+  const totalW = cols * bW + (cols - 1) * padding;
+
+  return {
+    bW,
+    bH,
+    padding,
+    offsetTop: Math.max(34, Math.floor(H * 0.08)),
+    offsetLeft: Math.floor((W - totalW) / 2)
+  };
+}
+
 function setupLevel(num) {
   currentLevel = num;
   let rows, cols, grid;
@@ -998,9 +1043,7 @@ function setupLevel(num) {
     for (let r = 0; r < rows; r++) { grid[r] = []; for (let c = 0; c < cols; c++) grid[r][c] = Math.random() > 0.3 ? 1 : 0; }
   } else { cols = 10; rows = 6 + Math.min(Math.floor(num / 3), 4); grid = null; }
 
-  const bW = 68, bH = 22, padding = 4;
-  const offsetTop = 50;
-  const offsetLeft = (W - (cols * (bW + padding) - padding)) / 2;
+  const { bW, bH, padding, offsetTop, offsetLeft } = getBrickMetrics(cols);
   const drops = DIFFICULTY[difficulty].brickDrops;
 
   bricks = [];
@@ -1698,9 +1741,7 @@ function loadCustomLevel() {
     perfectClubs = true;
     bricksHit = 0;
     createPaddle();
-    const bW = 68, bH = 22, padding = 4;
-    const offsetTop = 50;
-    const offsetLeft = (W - (data.cols * (bW + padding) - padding)) / 2;
+    const { bW, bH, padding, offsetTop, offsetLeft } = getBrickMetrics(data.cols);
     bricks = [];
     for (let r = 0; r < data.rows; r++) {
       for (let c = 0; c < data.cols; c++) {
