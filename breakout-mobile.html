@@ -396,7 +396,7 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.8</span></h1>
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
@@ -1631,10 +1631,10 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.8</span></h1>
     <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
-    <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
-    <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
+    <button class="btn" ontouchend="showDifficultySelect()" onclick="showDifficultySelect()">继续游戏</button>
+    <button class="btn gold" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">新游戏</button>
     <button class="btn secondary" onclick="showLevelSelect()">选择关卡</button>
     <button class="btn secondary" onclick="showScoreboard()">最高分</button>
     <button class="btn secondary" onclick="showAchievements()">🏅 成就</button>
@@ -1649,16 +1649,16 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.6</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.8</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
-        <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
-        <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
-        <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
-        <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
+        <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" ontouchend="setDifficulty('easy')" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
+        <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" ontouchend="setDifficulty('normal')" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
+        <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" ontouchend="setDifficulty('hard')" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
+        <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" ontouchend="setDifficulty('challenge')" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
       </div>
-      <button class="btn" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
-      <button class="btn secondary" onclick="showMenu()">返回</button>
+      <button class="btn" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
+      <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
     `);
     console.log('[DEBUG] overlay active:', overlay?.classList?.contains('active'));
   } catch(e) { console.error('[DEBUG] showDifficultySelect error:', e); }
@@ -1689,7 +1689,7 @@ function showLevelSelect() {
     const lockIcon = isLocked ? '🔒' : '';
     btns += `<button class="btn ${lockedClass}" style="color:${color};border-color:${color};font-size:14px;padding:6px 16px;margin:3px;" ${isLocked ? '' : `onclick="startFromLevel(${i})"`}>${lockIcon}${label}${hsText}</button>`;
   }
-  btns += `<button class="btn secondary" style="margin-top:12px;" onclick="showMenu()">返回</button>`;
+  btns += `<button class="btn secondary" style="margin-top:12px;" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>`;
   // Load custom level
   try {
     const saved = localStorage.getItem('breakout_custom_level');
@@ -1779,7 +1779,7 @@ function showScoreboard() {
     <h1 style="color:#ff66aa">最高分</h1>
     <p>累计总分: <span style="color:#00ffaa">${totalHigh}</span></p>
     <table id="scoreboard-table"><tr><th>关卡</th><th>得分</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1805,7 +1805,7 @@ function showAchievements() {
   showOverlay(`
     <h1 style="color:#ffcc00">🏅 成就</h1>
     <table id="scoreboard-table"><tr><th>成就</th><th>状态</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1908,9 +1908,9 @@ document.addEventListener('keyup', e => {
   if (e.key === 'ArrowRight' || e.key === 'd') keyboardRight = false;
 });
 
-// Touch controls
+// Touch controls (small screen only)
 canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   initAudio();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -1924,7 +1924,7 @@ canvas.addEventListener('touchstart', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   touchX = (touch.clientX - rect.left) * (W / rect.width);
@@ -1932,7 +1932,7 @@ canvas.addEventListener('touchmove', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   touchActive = false;
 }, { passive: false });
 
@@ -1997,7 +1997,7 @@ function update() {
       sfxGameOver();
       saveHighScore(currentLevel, score);
       checkAchievements();
-      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" onclick="showMenu()">主菜单</button>`);
+      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">主菜单</button>`);
     } else {
       balls = [resetBall()];
     }
@@ -2174,6 +2174,30 @@ updateHighScoreDisplay();
 // Native onclick only (no custom bindings - proven by diagnostic btn)
 // ============================================================
 console.log('[BTN] native onclick mode');
+</script>
+<div id="debug-panel" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#000000bb;display:flex;flex-direction:column;padding:15px;font-family:monospace;font-size:12px;color:#00ff00;overflow-y:auto;">
+<div style="font-size:16px;font-weight:bold;color:#ff0000;margin-bottom:10px;">🔍 触摸调试</div>
+<div id="debug-events" style="flex:1;overflow-y:auto;background:#111;padding:10px;border-radius:5px;">等待触摸...</div>
+<button onclick="closeDebug()" style="margin-top:10px;background:#ff3333;color:#fff;border:none;border-radius:5px;padding:8px;font-size:14px;">关闭调试</button>
+</div>
+<script>
+// Track ALL touch events globally
+var debugEl = document.getElementById('debug-events');
+function addDebug(msg) {
+  if (!debugEl) return;
+  var now = new Date().toLocaleTimeString();
+  debugEl.innerHTML = '<div style="color:#888;">' + now + ' | ' + msg + '</div>' + debugEl.innerHTML;
+  if (debugEl.children.length > 50) debugEl.removeChild(debugEl.lastChild);
+}
+
+document.addEventListener('touchstart', function(e) { addDebug('TOUCHSTART target=' + e.target.localName + ' id=' + (e.target.id||'none') + ' class=' + e.target.className); }, true);
+document.addEventListener('touchend', function(e) { addDebug('TOUCHEND target=' + e.target.localName + ' id=' + (e.target.id||'none')); }, true);
+document.addEventListener('touchmove', function(e) { addDebug('TOUCHMOVE target=' + e.target.localName); }, true);
+document.addEventListener('click', function(e) { addDebug('CLICK target=' + e.target.localName + ' id=' + (e.target.id||'none') + ' tag=' + e.target.tagName); }, true);
+document.addEventListener('mousedown', function(e) { addDebug('MOUSEDOWN target=' + e.target.localName); }, true);
+document.addEventListener('mouseup', function(e) { addDebug('MOUSEUP target=' + e.target.localName); }, true);
+
+window.closeDebug = function() { document.getElementById('debug-panel')?.remove(); };
 </script>
 </body>
 </html>
