@@ -28,7 +28,6 @@
 
 #overlay.active {
   display: flex;
-  will-change: transform;
 }
 #overlay button, #overlay a, #overlay select, #overlay input {
   -webkit-tap-highlight-color: transparent;
@@ -72,12 +71,11 @@
     align-items: center;
     justify-content: center;
     z-index: 10;
-    background: #0d0d24dd;
-    backdrop-filter: blur(4px);
+    background: #0d0d24ee;
     padding: 20px;
     overflow-y: auto;
   }
-  #overlay.active { display: flex; pointer-events: all; }
+  #overlay.active { display: flex; }
   #overlay h1 {
     font-size: 48px;
     margin-bottom: 12px;
@@ -396,7 +394,7 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.2</span></h1>
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
@@ -1631,7 +1629,7 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.2</span></h1>
     <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
     <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
     <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
@@ -1649,7 +1647,7 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.2</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
         <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
