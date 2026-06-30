@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>iOS Touch Test</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; color:#fff; font-family:monospace; padding:20px; }
+</style>
+</head>
+<body>
+<h1>iOS Touch Test</h1>
+<p>Test touchend directly on elements</p>
+
+<div id="test1">
+  <button onclick="test1()">onclick</button>
+  <p id="r1">-</p>
+</div>
+
+<div id="test2" style="background:#222; padding:20px;">
+  <button ontouchend="test2()">ontouchend</button>
+  <p id="r2">-</p>
+</div>
+
+<div id="test3" style="background:#333; padding:20px;">
+  <button ontouchend="test3()" onclick="test3()">ontouchend+onclick</button>
+  <p id="r3">-</p>
+</div>
+
+<script>
+var r1 = document.getElementById('r1');
+var r2 = document.getElementById('r2');
+var r3 = document.getElementById('r3');
+
+window.test1 = function() { r1.textContent = '✅ onclick work'; console.log('test1 clicked'); };
+window.test2 = function() { r2.textContent = '✅ ontouchend work'; console.log('test2 ontouchend'); };
+window.test3 = function() { r3.textContent = '✅ ontouchend+onclick work'; console.log('test3 ontouchend+click'); };
+</script>
+</body>
+</html>

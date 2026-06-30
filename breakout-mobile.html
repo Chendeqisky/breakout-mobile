@@ -18,6 +18,7 @@
     font-family: 'Courier New', monospace;
     color: #e0e0ff;
     overflow: hidden;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
     padding-top: env(safe-area-inset-top, 0px);
@@ -28,7 +29,6 @@
 
 #overlay.active {
   display: flex;
-  will-change: transform;
 }
 #overlay button, #overlay a, #overlay select, #overlay input {
   -webkit-tap-highlight-color: transparent;
@@ -72,12 +72,10 @@
     align-items: center;
     justify-content: center;
     z-index: 10;
-    background: #0d0d24dd;
-    backdrop-filter: blur(4px);
+    background: #0d0d24ee;
     padding: 20px;
-    overflow-y: auto;
   }
-  #overlay.active { display: flex; pointer-events: all; }
+  #overlay.active { display: flex; }
   #overlay h1 {
     font-size: 48px;
     margin-bottom: 12px;
@@ -385,6 +383,8 @@
 </style>
 </head>
 <body>
+<!-- DIAGNOSTIC: test if onclick works at all on this page -->
+<button onclick="alert('✅ onclick 工作正常！')" style="position:fixed;top:5px;right:5px;z-index:99999;background:#ff3366;color:#fff;border:none;border-radius:5px;padding:8px 14px;font-size:13px;font-family:monospace;">🔴 诊断按钮</button>
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -396,14 +396,14 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
-  <button class="btn" data-action="showDifficultySelect">开始游戏</button>
-  <button class="btn" id="mobile-start" data-action="startGame" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
-  <button class="btn secondary" data-action="showMenu">主菜单</button>
+  <button class="btn" data-action="showDifficultySelect" onclick="showDifficultySelect()">开始游戏</button>
+  <button class="btn" id="mobile-start" data-action="startGame" onclick="startGame()" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
+  <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
 </div>
 
 <div id="powerup-indicators"></div>
@@ -437,23 +437,8 @@
 
 <script>
 // Prevent rubber-band scrolling on iOS
-document.body.addEventListener('touchmove', function(e) {
-  // Allow scrolling in overlay content
-  if (e.target.closest('#overlay') && e.target.closest('#overlay').scrollTop !== undefined) {
-    return;
-  }
-  e.preventDefault();
-}, { passive: false });
-
-// Prevent double-tap to zoom on iOS
-let lastTouchEnd = 0;
-document.addEventListener('touchend', function(e) {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
-  lastTouchEnd = now;
-}, false);
+// CSS touch-action: manipulation handles zoom prevention
+// No more global preventDefault that blocks button clicks on iOS
 
 
 // ============================================================
@@ -1631,10 +1616,10 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
     <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
-    <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
-    <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
+    <button class="btn" ontouchend="showDifficultySelect()" onclick="showDifficultySelect()">继续游戏</button>
+    <button class="btn gold" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">新游戏</button>
     <button class="btn secondary" onclick="showLevelSelect()">选择关卡</button>
     <button class="btn secondary" onclick="showScoreboard()">最高分</button>
     <button class="btn secondary" onclick="showAchievements()">🏅 成就</button>
@@ -1649,16 +1634,16 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
-        <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
-        <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
-        <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
-        <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
+        <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" ontouchend="setDifficulty('easy')" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
+        <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" ontouchend="setDifficulty('normal')" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
+        <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" ontouchend="setDifficulty('hard')" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
+        <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" ontouchend="setDifficulty('challenge')" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
       </div>
-      <button class="btn" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
-      <button class="btn secondary" onclick="showMenu()">返回</button>
+      <button class="btn" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
+      <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
     `);
     console.log('[DEBUG] overlay active:', overlay?.classList?.contains('active'));
   } catch(e) { console.error('[DEBUG] showDifficultySelect error:', e); }
@@ -1689,7 +1674,7 @@ function showLevelSelect() {
     const lockIcon = isLocked ? '🔒' : '';
     btns += `<button class="btn ${lockedClass}" style="color:${color};border-color:${color};font-size:14px;padding:6px 16px;margin:3px;" ${isLocked ? '' : `onclick="startFromLevel(${i})"`}>${lockIcon}${label}${hsText}</button>`;
   }
-  btns += `<button class="btn secondary" style="margin-top:12px;" onclick="showMenu()">返回</button>`;
+  btns += `<button class="btn secondary" style="margin-top:12px;" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>`;
   // Load custom level
   try {
     const saved = localStorage.getItem('breakout_custom_level');
@@ -1779,7 +1764,7 @@ function showScoreboard() {
     <h1 style="color:#ff66aa">最高分</h1>
     <p>累计总分: <span style="color:#00ffaa">${totalHigh}</span></p>
     <table id="scoreboard-table"><tr><th>关卡</th><th>得分</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1805,7 +1790,7 @@ function showAchievements() {
   showOverlay(`
     <h1 style="color:#ffcc00">🏅 成就</h1>
     <table id="scoreboard-table"><tr><th>成就</th><th>状态</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1908,9 +1893,9 @@ document.addEventListener('keyup', e => {
   if (e.key === 'ArrowRight' || e.key === 'd') keyboardRight = false;
 });
 
-// Touch controls
+// Touch controls (small screen only)
 canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   initAudio();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -1924,7 +1909,7 @@ canvas.addEventListener('touchstart', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   touchX = (touch.clientX - rect.left) * (W / rect.width);
@@ -1932,7 +1917,7 @@ canvas.addEventListener('touchmove', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   touchActive = false;
 }, { passive: false });
 
@@ -1997,7 +1982,7 @@ function update() {
       sfxGameOver();
       saveHighScore(currentLevel, score);
       checkAchievements();
-      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" onclick="showMenu()">主菜单</button>`);
+      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">主菜单</button>`);
     } else {
       balls = [resetBall()];
     }
@@ -2039,7 +2024,7 @@ function update() {
           <div class="stat-box"><div class="val">${difficulty}</div><div class="label">难度</div></div>
         </div>
         <button class="btn" onclick="startGame()">再玩一次</button>
-        <button class="btn secondary" data-action="showMenu">主菜单</button>
+        <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
       `);
     } else {
       checkAchievements();
@@ -2053,8 +2038,7 @@ function update() {
           <div class="stat-box"><div class="val">${perfectClubs ? '是' : '否'}</div><div class="label">完美通关</div></div>
           <div class="stat-box"><div class="val">${score}</div><div class="label">本关得分</div></div>
         </div>
-        <button class="btn" onclick="nextLevel()">继续</button>
-        <button class="btn secondary" data-action="showMenu">主菜单</button>
+        <button class="btn" onclick="nextLevel()"<button class="btn secondary" data-action="showMenu" onclick="showMenu()">ta-action="showMenu">主菜单</button>
       `);
     }
   }
@@ -2171,50 +2155,9 @@ requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
 
 // ============================================================
-//  BUTTON SYSTEM - direct touchend + click on buttons
+// Native onclick only (no custom bindings - proven by diagnostic btn)
 // ============================================================
-function bindOverlayButtons() {
-  var overlay = document.getElementById('overlay');
-  if (!overlay) return;
-  var btns = overlay.querySelectorAll('button, .btn, .diff-btn');
-  btns.forEach(function(btn) {
-    // Bind touchend for instant iOS response
-    btn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      var action = this.dataset.action || this.getAttribute('onclick');
-      if (!action) return;
-      if (this.dataset.action && typeof window[this.dataset.action] === 'function') {
-        try { window[this.dataset.action](); } catch(err) { console.error('[BTN]', err); }
-      } else if (this.getAttribute('onclick')) {
-        try { eval(this.getAttribute('onclick')); } catch(err) { console.error('[BTN]', err); }
-      }
-    });
-    // Bind click for desktop/fallback
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var action = this.dataset.action || this.getAttribute('onclick');
-      if (!action) return;
-      if (this.dataset.action && typeof window[this.dataset.action] === 'function') {
-        try { window[this.dataset.action](); } catch(err) { console.error('[BTN]', err); }
-      } else if (this.getAttribute('onclick')) {
-        try { eval(this.getAttribute('onclick')); } catch(err) { console.error('[BTN]', err); }
-      }
-    });
-    console.log('[BTN] bound to:', btn.dataset.action || btn.getAttribute('onclick'));
-  });
-}
-
-// Bind initial buttons
-bindOverlayButtons();
-
-// Hook into showOverlay to rebind buttons after content change
-var _origShowOverlay = showOverlay;
-showOverlay = function(html) {
-  _origShowOverlay(html);
-  bindOverlayButtons();
-};
-
-console.log('[BTN] button system bound');
+console.log('[BTN] native onclick mode');
 </script>
 </body>
 </html>

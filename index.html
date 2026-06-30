@@ -9,7 +9,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0a1a;
+    background: #0a0a2a;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -18,20 +18,30 @@
     font-family: 'Courier New', monospace;
     color: #e0e0ff;
     overflow: hidden;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
+
+#overlay.active {
+  display: flex;
+}
+#overlay button, #overlay a, #overlay select, #overlay input {
+  -webkit-tap-highlight-color: transparent;
+}
+#overlay input[type="number"], #overlay input[type="range"] {
+  touch-action: pan-y;
+}
   #header {
     display: flex;
     justify-content: space-between;
     width: 800px;
     padding: 10px 20px;
-    background: linear-gradient(180deg, #1a1a3a 0%, #0f0f2a 100%);
+    background: linear-gradient(180deg, #2a1a3a 0%, #1f0f2a 100%);
     border-radius: 12px 12px 0 0;
     border-bottom: 2px solid #333355;
     font-size: 16px;
@@ -52,6 +62,7 @@
     border-radius: 0 0 12px 12px;
     background: #0d0d24;
     transition: transform 0.05s ease-out;
+    touch-action: manipulation;
   }
   #overlay {
     position: absolute;
@@ -60,14 +71,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
     z-index: 10;
-    background: #0d0d24dd;
-    backdrop-filter: blur(4px);
+    background: #0d0d24ee;
     padding: 20px;
-    overflow-y: auto;
   }
-  #overlay.active { display: flex; pointer-events: all; }
+  #overlay.active { display: flex; }
   #overlay h1 {
     font-size: 48px;
     margin-bottom: 12px;
@@ -359,7 +367,7 @@
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: #0a0a1a;
+    background: #0a0a2a;
     z-index: 9999;
     flex-direction: column;
     align-items: center;
@@ -375,6 +383,8 @@
 </style>
 </head>
 <body>
+<!-- DIAGNOSTIC: test if onclick works at all on this page -->
+<button onclick="alert('✅ onclick 工作正常！')" style="position:fixed;top:5px;right:5px;z-index:99999;background:#ff3366;color:#fff;border:none;border-radius:5px;padding:8px 14px;font-size:13px;font-family:monospace;">🔴 诊断按钮</button>
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -386,14 +396,14 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #00ffaa;">BREAKOUT</h1>
-  <h2>打 砖 块</h2>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+  <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
-  <button class="btn" onclick="showDifficultySelect()">开始游戏</button>
-  <button class="btn" id="mobile-start" onclick="startGame()" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
-  <button class="btn secondary" onclick="showMenu()">主菜单</button>
+  <button class="btn" data-action="showDifficultySelect" onclick="showDifficultySelect()">开始游戏</button>
+  <button class="btn" id="mobile-start" data-action="startGame" onclick="startGame()" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
+  <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
 </div>
 
 <div id="powerup-indicators"></div>
@@ -427,23 +437,8 @@
 
 <script>
 // Prevent rubber-band scrolling on iOS
-document.body.addEventListener('touchmove', function(e) {
-  // Allow scrolling in overlay content
-  if (e.target.closest('#overlay') && e.target.closest('#overlay').scrollTop !== undefined) {
-    return;
-  }
-  e.preventDefault();
-}, { passive: false });
-
-// Prevent double-tap to zoom on iOS
-let lastTouchEnd = 0;
-document.addEventListener('touchend', function(e) {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
-  lastTouchEnd = now;
-}, false);
+// CSS touch-action: manipulation handles zoom prevention
+// No more global preventDefault that blocks button clicks on iOS
 
 
 // ============================================================
@@ -1621,10 +1616,10 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #00ffaa;">BREAKOUT</h1>
-    <h2>打 砖 块</h2>
-    <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
-    <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+    <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
+    <button class="btn" ontouchend="showDifficultySelect()" onclick="showDifficultySelect()">继续游戏</button>
+    <button class="btn gold" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">新游戏</button>
     <button class="btn secondary" onclick="showLevelSelect()">选择关卡</button>
     <button class="btn secondary" onclick="showScoreboard()">最高分</button>
     <button class="btn secondary" onclick="showAchievements()">🏅 成就</button>
@@ -1633,20 +1628,25 @@ function showMenu() {
 }
 
 function showDifficultySelect() {
-  gameState = 'menu';
-  const dc = DIFFICULTY[difficulty];
-  showOverlay(`
-    <h1 style="color: #00ffaa;">BREAKOUT</h1>
-    <h2>选择难度</h2>
-    <div class="diff-select">
-      <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
-      <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
-      <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
-      <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
-    </div>
-    <button class="btn" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
-  `);
+  try {
+    console.log('[DEBUG] showDifficultySelect called, difficulty=' + difficulty);
+    gameState = 'menu';
+    const dc = DIFFICULTY[difficulty];
+    if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
+    showOverlay(`
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+      <h2>选择难度</h2>
+      <div class="diff-select">
+        <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" ontouchend="setDifficulty('easy')" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
+        <button class="diff-btn ${difficulty === 'normal' ? 'selected-normal' : ''}" ontouchend="setDifficulty('normal')" onclick="setDifficulty('normal')">普通<small>3生命 标准</small></button>
+        <button class="diff-btn ${difficulty === 'hard' ? 'selected-hard' : ''}" ontouchend="setDifficulty('hard')" onclick="setDifficulty('hard')">困难<small>2生命 球快 道具少</small></button>
+        <button class="diff-btn ${difficulty === 'challenge' ? 'selected-challenge' : ''}" ontouchend="setDifficulty('challenge')" onclick="setDifficulty('challenge')">挑战<small>球速递增 无暂停</small></button>
+      </div>
+      <button class="btn" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">开始 (${dc.lives}生命)</button>
+      <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
+    `);
+    console.log('[DEBUG] overlay active:', overlay?.classList?.contains('active'));
+  } catch(e) { console.error('[DEBUG] showDifficultySelect error:', e); }
 }
 
 function setDifficulty(d) {
@@ -1674,7 +1674,7 @@ function showLevelSelect() {
     const lockIcon = isLocked ? '🔒' : '';
     btns += `<button class="btn ${lockedClass}" style="color:${color};border-color:${color};font-size:14px;padding:6px 16px;margin:3px;" ${isLocked ? '' : `onclick="startFromLevel(${i})"`}>${lockIcon}${label}${hsText}</button>`;
   }
-  btns += `<button class="btn secondary" style="margin-top:12px;" onclick="showMenu()">返回</button>`;
+  btns += `<button class="btn secondary" style="margin-top:12px;" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>`;
   // Load custom level
   try {
     const saved = localStorage.getItem('breakout_custom_level');
@@ -1726,26 +1726,28 @@ function loadCustomLevel() {
 }
 
 function startFromLevel(num) {
-  initAudio();
-  const diff = DIFFICULTY[difficulty];
-  score = 0;
-  lives = diff.lives;
-  currentLevel = num;
-  multiplier = 1;
-  comboTimer = 0;
-  particles = []; powerUps = []; lasers = []; breakAnims = [];
-  activeEffects = {};
-  gameTime = 0; gameTimeStart = Date.now();
-  perfectClubs = true;
-  bricksHit = 0;
-  createPaddle();
-  balls = [resetBall()];
-  setupLevel(num);
-  bricksTotal = bricks.length;
-  updateUI();
-  hideOverlay();
-  gameState = 'playing';
-  startMusic();
+  try {
+    console.log('[DEBUG] startFromLevel(' + num + ') called, difficulty=' + difficulty);
+    initAudio();
+    const diff = DIFFICULTY[difficulty];
+    score = 0; lives = diff.lives; currentLevel = num;
+    multiplier = 1; comboTimer = 0;
+    particles = []; powerUps = []; lasers = []; breakAnims = [];
+    activeEffects = {};
+    gameTime = 0; gameTimeStart = Date.now();
+    perfectClubs = true; bricksHit = 0;
+    createPaddle();
+    balls = [resetBall()];
+    balls[0].attached = false;
+    console.log('[DEBUG] ball created, attached=' + balls[0].attached + ', vx=' + balls[0].vx + ', vy=' + balls[0].vy);
+    setupLevel(num);
+    bricksTotal = bricks.length;
+    updateUI();
+    hideOverlay();
+    gameState = 'playing';
+    console.log('[DEBUG] gameState=playing, bricks=' + bricks.length);
+    startMusic();
+  } catch(e) { console.error('[DEBUG] startFromLevel error:', e); }
 }
 
 function showScoreboard() {
@@ -1762,7 +1764,7 @@ function showScoreboard() {
     <h1 style="color:#ff66aa">最高分</h1>
     <p>累计总分: <span style="color:#00ffaa">${totalHigh}</span></p>
     <table id="scoreboard-table"><tr><th>关卡</th><th>得分</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1788,7 +1790,7 @@ function showAchievements() {
   showOverlay(`
     <h1 style="color:#ffcc00">🏅 成就</h1>
     <table id="scoreboard-table"><tr><th>成就</th><th>状态</th></tr>${rows}</table>
-    <button class="btn secondary" onclick="showMenu()">返回</button>
+    <button class="btn secondary" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">返回</button>
   `);
 }
 
@@ -1891,9 +1893,9 @@ document.addEventListener('keyup', e => {
   if (e.key === 'ArrowRight' || e.key === 'd') keyboardRight = false;
 });
 
-// Touch controls
+// Touch controls (small screen only)
 canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   initAudio();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -1907,7 +1909,7 @@ canvas.addEventListener('touchstart', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   touchX = (touch.clientX - rect.left) * (W / rect.width);
@@ -1915,7 +1917,7 @@ canvas.addEventListener('touchmove', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
-  e.preventDefault();
+  if (isSmallScreen) e.preventDefault();
   touchActive = false;
 }, { passive: false });
 
@@ -1980,7 +1982,7 @@ function update() {
       sfxGameOver();
       saveHighScore(currentLevel, score);
       checkAchievements();
-      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" onclick="showMenu()">主菜单</button>`);
+      showOverlay(`<h1 style="color:#ff3355">游戏结束</h1><p>最终得分: ${score}</p><p>关卡: ${currentLevel}</p><button class="btn" onclick="startFromLevel(${currentLevel})">再来一次</button><button class="btn red" ontouchend="showMenu()" ontouchend="showMenu()" onclick="showMenu()">主菜单</button>`);
     } else {
       balls = [resetBall()];
     }
@@ -2022,7 +2024,7 @@ function update() {
           <div class="stat-box"><div class="val">${difficulty}</div><div class="label">难度</div></div>
         </div>
         <button class="btn" onclick="startGame()">再玩一次</button>
-        <button class="btn secondary" onclick="showMenu()">主菜单</button>
+        <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
       `);
     } else {
       checkAchievements();
@@ -2036,8 +2038,7 @@ function update() {
           <div class="stat-box"><div class="val">${perfectClubs ? '是' : '否'}</div><div class="label">完美通关</div></div>
           <div class="stat-box"><div class="val">${score}</div><div class="label">本关得分</div></div>
         </div>
-        <button class="btn" onclick="nextLevel()">继续</button>
-        <button class="btn secondary" onclick="showMenu()">主菜单</button>
+        <button class="btn" onclick="nextLevel()"<button class="btn secondary" data-action="showMenu" onclick="showMenu()">ta-action="showMenu">主菜单</button>
       `);
     }
   }
@@ -2089,22 +2090,28 @@ function gameLoop() {
 //  GAME CONTROLS
 // ============================================================
 function startGame() {
-  initAudio();
-  difficulty = 'normal';
-  score = 0; lives = 3; currentLevel = 1;
-  multiplier = 1; comboTimer = 0;
-  particles = []; powerUps = []; lasers = []; breakAnims = [];
-  activeEffects = {};
-  gameTime = 0; gameTimeStart = Date.now();
-  perfectClubs = true; bricksHit = 0;
-  createPaddle();
-  balls = [resetBall()];
-  setupLevel(1);
-  bricksTotal = bricks.length;
-  updateUI();
-  hideOverlay();
-  gameState = 'playing';
-  startMusic();
+  try {
+    console.log('[DEBUG] startGame() called');
+    initAudio();
+    difficulty = 'normal';
+    score = 0; lives = 3; currentLevel = 1;
+    multiplier = 1; comboTimer = 0;
+    particles = []; powerUps = []; lasers = []; breakAnims = [];
+    activeEffects = {};
+    gameTime = 0; gameTimeStart = Date.now();
+    perfectClubs = true; bricksHit = 0;
+    createPaddle();
+    balls = [resetBall()];
+    balls[0].attached = false;
+    console.log('[DEBUG] ball created, attached=' + balls[0].attached + ', vx=' + balls[0].vx + ', vy=' + balls[0].vy);
+    setupLevel(1);
+    bricksTotal = bricks.length;
+    updateUI();
+    hideOverlay();
+    gameState = 'playing';
+    console.log('[DEBUG] gameState=playing, bricks=' + bricks.length);
+    startMusic();
+  } catch(e) { console.error('[DEBUG] startGame error:', e); }
 }
 
 function resumeGame() {
@@ -2146,6 +2153,11 @@ if (isSmallScreen) {
 // Start the loop
 requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
+
+// ============================================================
+// Native onclick only (no custom bindings - proven by diagnostic btn)
+// ============================================================
+console.log('[BTN] native onclick mode');
 </script>
 </body>
 </html>
