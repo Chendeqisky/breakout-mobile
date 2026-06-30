@@ -9,7 +9,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0a1a;
+    background: #0a0a2a;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -41,7 +41,7 @@
     justify-content: space-between;
     width: 800px;
     padding: 10px 20px;
-    background: linear-gradient(180deg, #1a1a3a 0%, #0f0f2a 100%);
+    background: linear-gradient(180deg, #2a1a3a 0%, #1f0f2a 100%);
     border-radius: 12px 12px 0 0;
     border-bottom: 2px solid #333355;
     font-size: 16px;
@@ -369,7 +369,7 @@
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: #0a0a1a;
+    background: #0a0a2a;
     z-index: 9999;
     flex-direction: column;
     align-items: center;
@@ -396,8 +396,8 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #00ffaa;">BREAKOUT</h1>
-  <h2>打 砖 块</h2>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+  <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
@@ -1631,8 +1631,8 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #00ffaa;">BREAKOUT</h1>
-    <h2>打 砖 块</h2>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
+    <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
     <button class="btn" onclick="showDifficultySelect()">继续游戏</button>
     <button class="btn gold" onclick="startFromLevel(1)">新游戏</button>
     <button class="btn secondary" onclick="showLevelSelect()">选择关卡</button>
@@ -1649,7 +1649,7 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #00ffaa;">BREAKOUT</h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.1</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
         <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
