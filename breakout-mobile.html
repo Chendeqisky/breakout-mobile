@@ -27,7 +27,11 @@
   }
 
 #overlay {
-  touch-action: auto;
+  pointer-events: none;
+}
+#overlay.active {
+  display: flex;
+  pointer-events: all;
 }
 #overlay button, #overlay a, #overlay select, #overlay input {
   touch-action: manipulation;
@@ -402,9 +406,9 @@
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
-  <button class="btn" onclick="showDifficultySelect()">开始游戏</button>
+  <button class="btn" data-action="showDifficultySelect">开始游戏</button>
   <button class="btn" id="mobile-start" data-action="startGame" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
-  <button class="btn secondary" onclick="showMenu()">主菜单</button>
+  <button class="btn secondary" data-action="showMenu">主菜单</button>
 </div>
 
 <div id="powerup-indicators"></div>
@@ -444,7 +448,6 @@ document.body.addEventListener('touchmove', function(e) {
     return;
   }
   e.preventDefault();
-  e.stopPropagation();
 }, { passive: false });
 
 // Prevent double-tap to zoom on iOS
@@ -1913,7 +1916,6 @@ document.addEventListener('keyup', e => {
 // Touch controls
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   initAudio();
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -1928,7 +1930,6 @@ canvas.addEventListener('touchstart', e => {
 
 canvas.addEventListener('touchmove', e => {
   e.preventDefault();
-  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   touchX = (touch.clientX - rect.left) * (W / rect.width);
@@ -1937,7 +1938,6 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
-  e.stopPropagation();  // prevent bubbling to body/document touch handlers
   touchActive = false;
 }, { passive: false });
 
@@ -2044,7 +2044,7 @@ function update() {
           <div class="stat-box"><div class="val">${difficulty}</div><div class="label">难度</div></div>
         </div>
         <button class="btn" onclick="startGame()">再玩一次</button>
-        <button class="btn secondary" onclick="showMenu()">主菜单</button>
+        <button class="btn secondary" data-action="showMenu">主菜单</button>
       `);
     } else {
       checkAchievements();
@@ -2059,7 +2059,7 @@ function update() {
           <div class="stat-box"><div class="val">${score}</div><div class="label">本关得分</div></div>
         </div>
         <button class="btn" onclick="nextLevel()">继续</button>
-        <button class="btn secondary" onclick="showMenu()">主菜单</button>
+        <button class="btn secondary" data-action="showMenu">主菜单</button>
       `);
     }
   }
@@ -2168,17 +2168,7 @@ function nextLevel() {
 // Show mobile-specific UI elements
 if (isSmallScreen) {
   const mobileStart = document.getElementById('mobile-start');
-  if (mobileStart) {
-    mobileStart.style.display = 'inline-block';
-    mobileStart.addEventListener('touchstart', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      try { startGame(); } catch(err) { console.error('[MOBILE-START touch] error:', err); }
-    }, { passive: false });
-    mobileStart.addEventListener('click', function() {
-      try { startGame(); } catch(err) { console.error('[MOBILE-START click] error:', err); }
-    });
-  }
+  if (mobileStart) mobileStart.style.display = 'inline-block';
 }
 
 // Start the loop
@@ -2186,53 +2176,22 @@ requestAnimationFrame(gameLoop);
 updateHighScoreDisplay();
 
 // ============================================================
-//  MOBILE BUTTON CLICK FIX - touchstart + click delegation
+//  BUTTON SYSTEM - click events only (iOS Safari compatible)
 // ============================================================
-(function() {
-  var overlay = document.getElementById('overlay');
-  if (overlay) {
-    // touchstart handler: prevents canvas touch handlers from interfering
-    overlay.addEventListener('touchstart', function(e) {
-      var btn = e.target.closest('button');
-      if (!btn) return;
-      if (!overlay.classList.contains('active')) return;
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      if (btn.getAttribute('onclick')) {
-        try { eval(btn.getAttribute('onclick')); } catch(err) { console.error('[TOUCH] error:', err.message); }
-      } else if (btn.dataset.action) {
-        try { window[btn.dataset.action](); } catch(err) { console.error('[TOUCH] error:', err.message); }
-      }
-    }, { passive: false });
-
-    // click handler: executes onclick attributes
-    overlay.addEventListener('click', function(e) {
-      var btn = e.target.closest('button');
-      if (!btn) return;
-      if (!overlay.classList.contains('active')) return;
-      
-      if (btn.getAttribute('onclick')) {
-        e.stopPropagation();
-        try { eval(btn.getAttribute('onclick')); } catch(err) { console.error('[CLICK] error:', err.message); }
-        return;
-      }
-      if (btn.dataset.action) {
-        e.stopPropagation();
-        try { window[btn.dataset.action](); } catch(err) { console.error('[CLICK] error:', err.message); }
-      }
-    });
-  }
-  
-  // Global error catcher
-  window.addEventListener('error', function(e) {
-    console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.colno);
-  });
-  window.addEventListener('unhandledrejection', function(e) {
-    console.error('[GLOBAL UNHANDLED REJECTION]', e.reason);
-  });
-  
-  console.log('[INIT] Script loaded, overlay:', !!document.getElementById('overlay'), ', innerHTML:', document.getElementById('overlay') ? document.getElementById('overlay').innerHTML.substring(0, 100) : 'N/A');
-})();
+function btnAction(name) {
+  try {
+    if (typeof window[name] === 'function') window[name]();
+  } catch(e) { console.error('[BTN]', name, e); }
+}
+document.getElementById('overlay').addEventListener('click', function(e) {
+  var b = e.target.closest('button, .btn, .diff-btn');
+  if (!b) return;
+  var a = b.dataset.action;
+  if (a) { btnAction(a); return; }
+  var oc = b.getAttribute('onclick');
+  if (oc) { try { eval(oc); } catch(e) { console.error('[BTN]', e); } }
+});
+console.log('[BTN] click handlers bound');
 </script>
 </body>
 </html>
