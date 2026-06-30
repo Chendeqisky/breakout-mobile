@@ -383,8 +383,6 @@
 </style>
 </head>
 <body>
-<!-- DIAGNOSTIC: test if onclick works at all on this page -->
-<button onclick="alert('✅ onclick 工作正常！')" style="position:fixed;top:5px;right:5px;z-index:99999;background:#ff3366;color:#fff;border:none;border-radius:5px;padding:8px 14px;font-size:13px;font-family:monospace;">🔴 诊断按钮</button>
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -402,7 +400,6 @@
   <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
   <button class="btn" data-action="showDifficultySelect" onclick="showDifficultySelect()">开始游戏</button>
-  <button class="btn" id="mobile-start" data-action="startGame" onclick="startGame()" style="display:none; font-size: 14px; padding: 12px 24px;">🎮 开始</button>
   <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
 </div>
 
@@ -456,6 +453,8 @@ const shakeFactor = isMobilePerformance ? 0.7 : 1.0;
 // Scale canvas for mobile
 function setupMobileLayout() {
   if (!isSmallScreen) return;
+  const gameCanvas = document.getElementById('game');
+  if (!gameCanvas) return;
   
   // Calculate max canvas size that fits viewport
   const maxW = window.innerWidth * 0.98;
@@ -463,8 +462,8 @@ function setupMobileLayout() {
   const canvasW = Math.min(maxW, 800);
   const canvasH = canvasW / aspect;
   
-  canvas.style.width = canvasW + 'px';
-  canvas.style.height = canvasH + 'px';
+  gameCanvas.style.width = canvasW + 'px';
+  gameCanvas.style.height = canvasH + 'px';
 }
 setupMobileLayout();
 window.addEventListener('resize', setupMobileLayout);
@@ -2141,13 +2140,6 @@ function nextLevel() {
   hideOverlay();
   gameState = 'playing';
   startMusic();
-}
-
-
-// Show mobile-specific UI elements
-if (isSmallScreen) {
-  const mobileStart = document.getElementById('mobile-start');
-  if (mobileStart) mobileStart.style.display = 'inline-block';
 }
 
 // Start the loop
