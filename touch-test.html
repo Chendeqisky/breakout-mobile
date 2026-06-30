@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>触屏测试</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#0a0a1a; color:#e0e0ff; font-family:monospace;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100dvh; overflow:hidden;
+}
+h1 { color:#00ffaa; margin-bottom:30px; }
+.btn { 
+  margin:10px; padding:14px 32px; font-size:18px; font-family:monospace;
+  background:transparent; color:#00ffaa; border:2px solid #00ffaa; 
+  border-radius:8px; cursor:pointer; 
+}
+.btn:active { background:#00ffaa22; box-shadow:0 0 20px #00ffaa44; }
+.result { margin-top:20px; padding:20px; background:#111; border-radius:8px; min-width:300px; text-align:center; }
+.success { color:#00ffaa; }
+#overlay {
+  display:none; position:fixed; top:0;left:0;right:0;bottom:0;
+  background:#0d0d24dd; z-index:10;
+  flex-direction:column; align-items:center; justify-content:center;
+}
+#overlay.active { display:flex; }
+</style>
+</head>
+<body>
+<h1>触屏按钮测试</h1>
+<button class="btn" onclick="test1()">测试1：onclick</button>
+<button class="btn" id="test2btn">测试2：addEventListener-touchend</button>
+<button class="btn" id="test3btn">测试3：addEventListener-click</button>
+<button class="btn" onclick="toggleOverlay()">测试4：打开Overlay</button>
+
+<div id="overlay">
+  <h1 style="color:#ffcc00">OVERLAY 里</h1>
+  <button class="btn" onclick="testOverlay()">点击我</button>
+  <button class="btn" id="overlayBtn2">点我（touchend）</button>
+  <button class="btn" onclick="closeOverlay()">关闭</button>
+  <div class="result" id="overlayResult">等待点击...</div>
+</div>
+
+<div class="result" id="result">等待点击...</div>
+
+<script>
+var resultEl = document.getElementById('result');
+var overlayResultEl = document.getElementById('overlayResult');
+
+function log(msg, target) {
+  target = target || resultEl;
+  target.innerHTML = msg;
+  target.className = 'result success';
+}
+
+window.test1 = function() { log('✅ test1 onclick 成功！'); };
+document.getElementById('test2btn').addEventListener('touchend', function(e) {
+  e.preventDefault(); log('✅ test2 touchend 成功！');
+});
+document.getElementById('test3btn').addEventListener('click', function() {
+  log('✅ test3 click 成功！');
+});
+
+window.toggleOverlay = function() {
+  var ov = document.getElementById('overlay');
+  ov.classList.add('active');
+  bindOverlayBtns();
+};
+window.closeOverlay = function() {
+  document.getElementById('overlay').classList.remove('active');
+};
+window.testOverlay = function() {
+  log('✅ overlay onclick 成功！', overlayResultEl);
+};
+
+function bindOverlayBtns() {
+  var b2 = document.getElementById('overlayBtn2');
+  b2.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    log('✅ overlay touchend 成功！', overlayResultEl);
+  });
+}
+bindOverlayBtns();
+</script>
+</body>
+</html>
