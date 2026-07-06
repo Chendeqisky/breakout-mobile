@@ -77,12 +77,12 @@
     align-items: center;
     justify-content: center;
   }
-  #touch-track::after {
-    content: '← 滑动控制 →';
-    color: rgba(255, 255, 255, 0.25);
+  #touch-track .track-hint {
+    color: rgba(255, 255, 255, 0.3);
     font-size: 12px;
     font-family: 'Courier New', monospace;
     pointer-events: none;
+    user-select: none;
   }
   #overlay {
     position: absolute;
@@ -427,7 +427,6 @@
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 底部轨道条 / 键盘左右方向键</p>
-  <p style="color:#666; font-size:14px;">发射: 点击屏幕 / 空格</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
   <button class="btn" data-action="showDifficultySelect" onclick="showDifficultySelect()">开始游戏</button>
   <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
@@ -445,7 +444,7 @@
 <canvas id="game" width="800" height="560"></canvas>
 
 <!-- Mobile touch track for paddle control -->
-<div id="touch-track"></div>
+<div id="touch-track"><span class="track-hint">← 滑动控制 →</span></div>
 
 <div id="editor-panel">
   <h3>🔨 关卡编辑器</h3>
