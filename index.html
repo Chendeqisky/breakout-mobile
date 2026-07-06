@@ -64,22 +64,23 @@
     transition: transform 0.05s ease-out;
     touch-action: manipulation;
   }
-  /* Touch track for mobile paddle control (hidden on desktop) */
+  /* Touch track for mobile paddle control */
   #touch-track {
     display: none;
     width: min(98vw, 430px);
-    height: 32px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
     margin: 8px 0 4px;
     touch-action: none;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
   }
   #touch-track .track-hint {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
     font-family: 'Courier New', monospace;
     pointer-events: none;
     user-select: none;
@@ -444,7 +445,7 @@
 <canvas id="game" width="800" height="560"></canvas>
 
 <!-- Mobile touch track for paddle control -->
-<div id="touch-track"><span class="track-hint">← 滑动控制 →</span></div>
+<div id="touch-track" class="hidden-during-game"><span class="track-hint">← 滑动控制 →</span></div>
 
 <div id="editor-panel">
   <h3>🔨 关卡编辑器</h3>
@@ -1968,25 +1969,18 @@ document.addEventListener('keyup', e => {
 // ============================================================
 const touchTrack = document.getElementById('touch-track');
 
-// Track: move paddle
+// Track: move paddle - simplified mapping using viewport coordinates
 touchTrack.addEventListener('touchstart', e => {
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const trackRect = touchTrack.getBoundingClientRect();
   const touch = e.touches[0];
-  // Map track position to canvas width
-  const ratio = rect.width / rect.width; // canvas renders at W, display at rect.width
-  touchX = (touch.clientX - trackRect.left) * (W / trackRect.width);
+  mouseX = (touch.clientX / window.innerWidth) * W;
   touchActive = true;
-  mouseX = touchX;
 }, { passive: false });
 
 touchTrack.addEventListener('touchmove', e => {
   e.preventDefault();
-  const trackRect = touchTrack.getBoundingClientRect();
   const touch = e.touches[0];
-  touchX = (touch.clientX - trackRect.left) * (W / trackRect.width);
-  mouseX = touchX;
+  mouseX = (touch.clientX / window.innerWidth) * W;
 }, { passive: false });
 
 touchTrack.addEventListener('touchend', e => {
