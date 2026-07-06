@@ -69,10 +69,20 @@
     display: none;
     width: min(98vw, 430px);
     height: 32px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     margin: 8px 0 4px;
     touch-action: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #touch-track .track-hint {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    pointer-events: none;
+    user-select: none;
   }
   #overlay {
     position: absolute;
@@ -401,6 +411,7 @@
 </style>
 </head>
 <body>
+<!-- v6.30.14b - touch track fix + deploy trigger -->
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -434,7 +445,7 @@
 <canvas id="game" width="800" height="560"></canvas>
 
 <!-- Mobile touch track for paddle control -->
-<div id="touch-track"></div>
+<div id="touch-track"><span class="track-hint">← 滑动控制 →</span></div>
 
 <div id="editor-panel">
   <h3>🔨 关卡编辑器</h3>
@@ -498,7 +509,12 @@ function setupMobileLayout(resizeBackingStore = false) {
   gameCanvas.style.height = canvasH + 'px';
 }
 setupMobileLayout(true);
-window.addEventListener('resize', () => setupMobileLayout(false));
+window.addEventListener('resize', () => {
+  setupMobileLayout(false);
+  // Sync touch-track visibility with viewport width
+  const track = document.getElementById('touch-track');
+  if (track) track.style.display = window.innerWidth < 851 ? 'flex' : 'none';
+});
 
 // ============================================================
 //  CANVAS & CONTEXT
