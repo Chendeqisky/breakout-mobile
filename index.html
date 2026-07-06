@@ -64,6 +64,26 @@
     transition: transform 0.05s ease-out;
     touch-action: manipulation;
   }
+  /* Touch track for mobile paddle control (hidden on desktop) */
+  #touch-track {
+    display: none;
+    width: min(98vw, 430px);
+    height: 32px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    margin: 8px 0 4px;
+    touch-action: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #touch-track::after {
+    content: '← 滑动控制 →';
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    pointer-events: none;
+  }
   #overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -332,6 +352,7 @@
     #header { width: min(98vw, 430px); font-size: 12px; padding: 6px 8px; }
     #header span { flex: 1 1 30%; text-align: center; }
     canvas { width: min(98vw, 430px); height: auto; }
+    #touch-track { display: flex; }
     #overlay { padding: 10px; }
     #overlay h1 { font-size: 28px; }
     #overlay h2 { font-size: 18px; }
@@ -390,6 +411,7 @@
 </style>
 </head>
 <body>
+<!-- v6.30.14b - touch track fix + deploy trigger -->
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -401,10 +423,11 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
   <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
   <p>消灭所有砖块！</p>
-  <p style="color:#666; font-size:14px;">移动: 鼠标/触屏 / 键盘左右方向键</p>
+  <p style="color:#666; font-size:14px;">移动: 底部轨道条 / 键盘左右方向键</p>
+  <p style="color:#666; font-size:14px;">发射: 点击屏幕 / 空格</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
   <button class="btn" data-action="showDifficultySelect" onclick="showDifficultySelect()">开始游戏</button>
   <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
@@ -420,6 +443,9 @@
   <span>最高: <b id="highscore">0</b></span>
 </div>
 <canvas id="game" width="800" height="560"></canvas>
+
+<!-- Mobile touch track for paddle control -->
+<div id="touch-track"></div>
 
 <div id="editor-panel">
   <h3>🔨 关卡编辑器</h3>
@@ -483,7 +509,12 @@ function setupMobileLayout(resizeBackingStore = false) {
   gameCanvas.style.height = canvasH + 'px';
 }
 setupMobileLayout(true);
-window.addEventListener('resize', () => setupMobileLayout(false));
+window.addEventListener('resize', () => {
+  setupMobileLayout(false);
+  // Sync touch-track visibility with viewport width
+  const track = document.getElementById('touch-track');
+  if (track) track.style.display = window.innerWidth < 851 ? 'flex' : 'none';
+});
 
 // ============================================================
 //  CANVAS & CONTEXT
@@ -1658,7 +1689,7 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
     <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
     <button class="btn" ontouchend="showDifficultySelect()" onclick="showDifficultySelect()">继续游戏</button>
     <button class="btn gold" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">新游戏</button>
@@ -1676,7 +1707,7 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.13</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
         <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" ontouchend="setDifficulty('easy')" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
@@ -1933,32 +1964,44 @@ document.addEventListener('keyup', e => {
   if (e.key === 'ArrowRight' || e.key === 'd') keyboardRight = false;
 });
 
-// Touch controls (small screen only)
-canvas.addEventListener('touchstart', e => {
-  if (isSmallScreen) e.preventDefault();
-  initAudio();
-  const touch = e.touches[0];
+// ============================================================
+//  TOUCH TRACK (bottom rail for paddle, small screens only)
+// ============================================================
+const touchTrack = document.getElementById('touch-track');
+
+// Track: move paddle
+touchTrack.addEventListener('touchstart', e => {
+  e.preventDefault();
   const rect = canvas.getBoundingClientRect();
-  touchX = (touch.clientX - rect.left) * (W / rect.width);
+  const trackRect = touchTrack.getBoundingClientRect();
+  const touch = e.touches[0];
+  // Map track position to canvas width
+  const ratio = rect.width / rect.width; // canvas renders at W, display at rect.width
+  touchX = (touch.clientX - trackRect.left) * (W / trackRect.width);
   touchActive = true;
   mouseX = touchX;
+}, { passive: false });
+
+touchTrack.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const trackRect = touchTrack.getBoundingClientRect();
+  const touch = e.touches[0];
+  touchX = (touch.clientX - trackRect.left) * (W / trackRect.width);
+  mouseX = touchX;
+}, { passive: false });
+
+touchTrack.addEventListener('touchend', e => {
+  touchActive = false;
+}, { passive: false });
+
+// Canvas: only launch ball (small screen)
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  initAudio();
   if (gameState === 'playing') {
     if (balls.length > 0 && balls[0].attached) balls[0].attached = false;
     if (activeEffects.laser && activeEffects.laser > Date.now()) fireLaser();
   }
-}, { passive: false });
-
-canvas.addEventListener('touchmove', e => {
-  if (isSmallScreen) e.preventDefault();
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  touchX = (touch.clientX - rect.left) * (W / rect.width);
-  mouseX = touchX;
-}, { passive: false });
-
-canvas.addEventListener('touchend', e => {
-  if (isSmallScreen) e.preventDefault();
-  touchActive = false;
 }, { passive: false });
 
 // ============================================================
