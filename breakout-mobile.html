@@ -906,8 +906,10 @@ function generatePattern(pattern, rows, cols) {
     case 'diamond':
       for (let r = 0; r < rows; r++) {
         const mid = Math.floor(cols / 2);
-        const dist = Math.abs(r - rows / 2) + Math.abs(c - mid);
-        if (dist < Math.min(rows, cols) / 2) grid[r][c] = 1;
+        for (let c = 0; c < cols; c++) {
+          const dist = Math.abs(r - (rows - 1) / 2) + Math.abs(c - mid);
+          if (dist <= Math.floor(Math.min(rows, cols) / 2)) grid[r][c] = 1;
+        }
       }
       break;
     case 'fortress':
@@ -919,9 +921,11 @@ function generatePattern(pattern, rows, cols) {
     case 'pyramids':
       for (let r = 0; r < rows; r++) {
         const pyramids = [cols / 4, cols / 2 * 3];
-        for (const pyMid of pyramids) {
-          const width = Math.floor((rows - r) * 2);
-          if (Math.abs(c - pyMid) < width / 2) grid[r][c] = 1;
+        for (let c = 0; c < cols; c++) {
+          for (const pyMid of pyramids) {
+            const width = Math.floor((rows - r) * 2);
+            if (Math.abs(c - pyMid) < width / 2) grid[r][c] = 1;
+          }
         }
       }
       break;
@@ -1061,10 +1065,28 @@ function getBrickMetrics(cols) {
   };
 }
 
+function getBrickProfile(level, row, col, rows, cols) {
+  const center = Math.floor(cols / 2);
+  const profile = { hits: 1, special: 'normal' };
+
+  // Each early level introduces one readable mechanic before combinations appear.
+  if (level === 2 && row === 0 && col % 2 === 0) profile.hits = 2;
+  if (level === 3 && (row === 0 || col === 0 || col === cols - 1)) profile.hits = 2;
+  if (level === 4 && row === rows - 1 && (col === center - 2 || col === center + 2)) profile.special = 'prism';
+  if (level === 5 && row === 2 && (col === 2 || col === center - 1 || col === center + 1)) profile.special = 'bomb';
+  if (level === 6 && row === rows - 2 && col === center) profile.special = 'prism';
+  if (level === 7 && row === Math.floor(rows / 2) && (col === center - 2 || col === center + 2)) profile.special = 'bomb';
+  if (level >= 7 && (row + col + level) % 11 === 0) profile.special = 'bomb';
+  if (level >= 8 && (row * 3 + col + level) % 13 === 0) profile.special = 'prism';
+  if (level >= 10 && (row === 0 || row === rows - 1) && col % 3 === 0) profile.hits = 3;
+
+  return profile;
+}
+
 function setupLevel(num) {
   currentLevel = num;
   let rows, cols, grid;
-  if (num <= 1) { cols = 10; rows = 6; grid = null; }
+  if (num <= 1) { cols = 8; rows = 4; grid = null; }
   else if (num <= 15 && PRESET_LEVELS[num]) {
     cols = PRESET_LEVELS[num].cols; rows = PRESET_LEVELS[num].rows;
     grid = generatePattern(PRESET_LEVELS[num].pattern, rows, cols);
@@ -1075,26 +1097,19 @@ function setupLevel(num) {
   } else { cols = 10; rows = 6 + Math.min(Math.floor(num / 3), 4); grid = null; }
 
   const { bW, bH, padding, offsetTop, offsetLeft } = getBrickMetrics(cols);
-  const drops = DIFFICULTY[difficulty].brickDrops;
-
   bricks = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (grid && grid[r] && grid[r][c] === 0) continue;
-      const isHard = num >= 3 && r < 2 && Math.random() > 0.6;
-      const hitCount = isHard ? 2 : 1;
-      // Special bricks
-      let special = 'normal';
-      if (num >= 5 && Math.random() < 0.02 * drops) special = 'bomb';       // bomb: destroys adjacent bricks
-      if (num >= 3 && Math.random() < 0.01 * drops) special = 'key';         // key: extra life on break
+      const profile = getBrickProfile(num, r, c, rows, cols);
 
       bricks.push({
         x: offsetLeft + c * (bW + padding),
         y: offsetTop + r * (bH + padding),
         w: bW, h: bH, alive: true, row: r,
-        hits: hitCount, maxHits: hitCount,
+        hits: profile.hits, maxHits: profile.hits,
         palette: BRICK_PALETTE[r % BRICK_PALETTE.length],
-        special
+        special: profile.special
       });
     }
   }
@@ -1540,6 +1555,11 @@ function updateBall(ball) {
           lives = Math.min(lives + 1, 9);
           spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#ff3355', 20);
         }
+        if (b.special === 'prism' && powerUps.length < MAX_ACTIVE_POWERUPS) {
+          const reward = weightedRandom(POWER_TYPES.filter(p => p.type !== 'life'));
+          powerUps.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, ...reward, vy: 2, w: 36, h: 16 });
+          spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#00ffff', 20);
+        }
 
         bricksHit++;
       } else {
@@ -1623,20 +1643,40 @@ function drawBricks() {
       ctx.lineTo(b.x + b.w * 0.7, b.y + b.h);
       ctx.stroke();
     }
+    if (b.maxHits >= 2) {
+      ctx.strokeStyle = b.maxHits >= 3 ? '#ffffffcc' : '#ffffff77';
+      ctx.lineWidth = 1;
+      roundedRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4, 2);
+      ctx.stroke();
+      if (b.maxHits >= 3) {
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.w * 0.28, b.y + b.h * 0.5);
+        ctx.lineTo(b.x + b.w * 0.72, b.y + b.h * 0.5);
+        ctx.stroke();
+      }
+    }
     // Special brick indicators
     if (b.special === 'bomb') {
-      ctx.fillStyle = '#ffffff88';
-      ctx.font = 'bold 10px Courier New';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('💣', b.x + b.w / 2, b.y + b.h / 2);
+      ctx.strokeStyle = '#fff3';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(b.x + b.w * 0.3, b.y + b.h * 0.3);
+      ctx.lineTo(b.x + b.w * 0.7, b.y + b.h * 0.7);
+      ctx.moveTo(b.x + b.w * 0.7, b.y + b.h * 0.3);
+      ctx.lineTo(b.x + b.w * 0.3, b.y + b.h * 0.7);
+      ctx.stroke();
     }
-    if (b.special === 'key') {
-      ctx.fillStyle = '#ffffff88';
-      ctx.font = '10px Courier New';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🔑', b.x + b.w / 2, b.y + b.h / 2);
+    if (b.special === 'prism') {
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2, size = Math.min(b.w, b.h) * 0.3;
+      ctx.strokeStyle = '#ffffffcc';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size);
+      ctx.lineTo(cx + size, cy);
+      ctx.lineTo(cx, cy + size);
+      ctx.lineTo(cx - size, cy);
+      ctx.closePath();
+      ctx.stroke();
     }
   }
 }
@@ -2114,7 +2154,8 @@ function update() {
           <div class="stat-box"><div class="val">${perfectClubs ? '是' : '否'}</div><div class="label">完美通关</div></div>
           <div class="stat-box"><div class="val">${score}</div><div class="label">本关得分</div></div>
         </div>
-        <button class="btn" onclick="nextLevel()"<button class="btn secondary" data-action="showMenu" onclick="showMenu()">ta-action="showMenu">主菜单</button>
+        <button class="btn" onclick="nextLevel()">下一关</button>
+        <button class="btn secondary" data-action="showMenu" onclick="showMenu()">主菜单</button>
       `);
     }
   }
