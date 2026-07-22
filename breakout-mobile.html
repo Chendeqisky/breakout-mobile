@@ -412,7 +412,7 @@
 </style>
 </head>
 <body>
-<!-- v6.30.14b - touch track fix + deploy trigger -->
+<!-- 正式版 v1.0.0 -->
 <div id="landscape-warning">
   <h2>📱 请旋转设备</h2>
   <p>为了最佳游戏体验，请使用竖屏游玩</p>
@@ -424,8 +424,8 @@
 </button>
 
 <div id="overlay" class="active">
-  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
-  <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
+  <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">正式版 v1.0.0</span></h1>
+  <h2 style="color:#ffcc00;">🎯 打 砖 块 · 正式版</h2>
   <p>消灭所有砖块！</p>
   <p style="color:#666; font-size:14px;">移动: 底部轨道条 / 键盘左右方向键</p>
   <p style="color:#666; font-size:14px;">发射: 空格 / 点击屏幕</p>
@@ -1795,8 +1795,8 @@ function showMenu() {
   gameState = 'menu';
   stopMusic();
   showOverlay(`
-    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
-    <h2 style="color:#ffcc00;">🎯 打 砖 块 · 触屏修复版</h2>
+    <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">正式版 v1.0.0</span></h1>
+    <h2 style="color:#ffcc00;">🎯 打 砖 块 · 正式版</h2>
     <button class="btn" ontouchend="showDifficultySelect()" onclick="showDifficultySelect()">继续游戏</button>
     <button class="btn gold" ontouchend="startFromLevel(1)" onclick="startFromLevel(1)">新游戏</button>
     <button class="btn secondary" onclick="showLevelSelect()">选择关卡</button>
@@ -1813,7 +1813,7 @@ function showDifficultySelect() {
     const dc = DIFFICULTY[difficulty];
     if (!dc) { console.error('[DEBUG] DIFFICULTY[' + difficulty + '] is undefined'); return; }
     showOverlay(`
-      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">v6.30.14</span></h1>
+      <h1 style="color: #ff66aa;">BREAKOUT <span style="font-size:14px;color:#888;">正式版 v1.0.0</span></h1>
       <h2>选择难度</h2>
       <div class="diff-select">
         <button class="diff-btn ${difficulty === 'easy' ? 'selected-easy' : ''}" ontouchend="setDifficulty('easy')" onclick="setDifficulty('easy')">简单<small>5生命 道具多 球慢</small></button>
