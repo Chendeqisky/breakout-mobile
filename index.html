@@ -1076,6 +1076,7 @@ function getBrickProfile(level, row, col, rows, cols) {
   if (level === 5 && row === 2 && (col === 2 || col === center - 1 || col === center + 1)) profile.special = 'bomb';
   if (level === 6 && row === rows - 2 && col === center) profile.special = 'prism';
   if (level === 7 && row === Math.floor(rows / 2) && (col === center - 2 || col === center + 2)) profile.special = 'bomb';
+  if (level === 9 && row === 0 && col === center) profile.special = 'key';
   if (level >= 7 && (row + col + level) % 11 === 0) profile.special = 'bomb';
   if (level >= 8 && (row * 3 + col + level) % 13 === 0) profile.special = 'prism';
   if (level >= 10 && (row === 0 || row === rows - 1) && col % 3 === 0) profile.hits = 3;
@@ -1676,6 +1677,18 @@ function drawBricks() {
       ctx.lineTo(cx, cy + size);
       ctx.lineTo(cx - size, cy);
       ctx.closePath();
+      ctx.stroke();
+    }
+    if (b.special === 'key') {
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2, size = Math.min(b.w, b.h) * 0.28;
+      ctx.strokeStyle = '#ffffffcc';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, size, 0, Math.PI * 2);
+      ctx.moveTo(cx - size * 0.5, cy);
+      ctx.lineTo(cx + size * 0.5, cy);
+      ctx.moveTo(cx, cy - size * 0.5);
+      ctx.lineTo(cx, cy + size * 0.5);
       ctx.stroke();
     }
   }
