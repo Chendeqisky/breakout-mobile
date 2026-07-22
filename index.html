@@ -1067,7 +1067,7 @@ function getBrickMetrics(cols) {
 
 function getBrickProfile(level, row, col, rows, cols) {
   const center = Math.floor(cols / 2);
-  const profile = { hits: 1, special: 'normal' };
+  const profile = { hits: 1, special: 'normal', indestructible: false };
 
   // Each early level introduces one readable mechanic before combinations appear.
   if (level === 2 && row === 0 && col % 2 === 0) profile.hits = 2;
@@ -1080,6 +1080,13 @@ function getBrickProfile(level, row, col, rows, cols) {
   if (level >= 7 && (row + col + level) % 11 === 0) profile.special = 'bomb';
   if (level >= 8 && (row * 3 + col + level) % 13 === 0) profile.special = 'prism';
   if (level >= 10 && (row === 0 || row === rows - 1) && col % 3 === 0) profile.hits = 3;
+  if ((level === 6 && row === 2 && (col === center - 1 || col === center + 1)) ||
+      (level === 7 && row === Math.floor(rows / 2) && col === center) ||
+      (level >= 10 && row === rows - 1 && col === center - 1) ||
+      (level >= 8 && (row * 5 + col + level) % 17 === 0)) {
+    profile.indestructible = true;
+    profile.special = 'normal';
+  }
 
   return profile;
 }
@@ -1110,10 +1117,15 @@ function setupLevel(num) {
         w: bW, h: bH, alive: true, row: r,
         hits: profile.hits, maxHits: profile.hits,
         palette: BRICK_PALETTE[r % BRICK_PALETTE.length],
-        special: profile.special
+        special: profile.special,
+        indestructible: profile.indestructible
       });
     }
   }
+}
+
+function getBreakableBrickCount() {
+  return bricks.filter(b => !b.indestructible).length;
 }
 
 // ============================================================
@@ -1258,6 +1270,12 @@ function updateLasers() {
     for (const b of bricks) {
       if (!b.alive) continue;
       if (l.x > b.x && l.x < b.x + b.w && l.y + l.h / 2 > b.y && l.y - l.h / 2 < b.y + b.h) {
+        if (b.indestructible) {
+          spawnParticles(l.x, l.y, '#b7c6db', 8);
+          sfxWallBounce();
+          l.life = 0;
+          break;
+        }
         b.hits--;
         if (b.hits <= 0) {
           b.alive = false;
@@ -1516,6 +1534,15 @@ function updateBall(ball) {
       const minOverlapX = Math.min(overlapLeft, overlapRight);
       const minOverlapY = Math.min(overlapTop, overlapBottom);
 
+      if (b.indestructible) {
+        if (minOverlapX < minOverlapY) ball.vx = -ball.vx;
+        else ball.vy = -ball.vy;
+        spawnParticles(ball.x, ball.y, '#b7c6db', 8);
+        screenShake(1, 2);
+        sfxWallBounce();
+        break;
+      }
+
       if (!ball.penetrating) {
         if (minOverlapX < minOverlapY) ball.vx = -ball.vx;
         else ball.vy = -ball.vy;
@@ -1539,7 +1566,7 @@ function updateBall(ball) {
           // Destroy adjacent bricks within radius
           const radius = 50;
           for (const other of bricks) {
-            if (other === b || !other.alive) continue;
+            if (other === b || !other.alive || other.indestructible) continue;
             const dx2 = (other.x + other.w / 2) - (b.x + b.w / 2);
             const dy2 = (other.y + other.h / 2) - (b.y + b.h / 2);
             if (Math.sqrt(dx2 * dx2 + dy2 * dy2) < radius) {
@@ -1619,6 +1646,32 @@ function drawPaddle() {
 function drawBricks() {
   for (const b of bricks) {
     if (!b.alive) continue;
+    if (b.indestructible) {
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+      drawGlow(cx, cy, 18, '#6f86a0');
+      ctx.fillStyle = '#344055';
+      roundedRect(b.x, b.y, b.w, b.h, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#b7c6db';
+      ctx.lineWidth = 1.5;
+      roundedRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 3);
+      ctx.stroke();
+      ctx.strokeStyle = '#91a4bb88';
+      ctx.lineWidth = 1;
+      for (let x = b.x - b.h; x < b.x + b.w; x += 7) {
+        ctx.beginPath();
+        ctx.moveTo(x, b.y + b.h);
+        ctx.lineTo(x + b.h, b.y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#dce8f5';
+      for (const offset of [-0.28, 0.28]) {
+        ctx.beginPath();
+        ctx.arc(cx + b.w * offset, cy, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      continue;
+    }
     if (b.hits >= 2 || b.maxHits > 1) drawGlow(b.x + b.w / 2, b.y + b.h / 2, 25, b.palette.color);
     const alpha = b.hits < b.maxHits ? 0.6 : 1;
     ctx.globalAlpha = alpha;
@@ -1840,7 +1893,7 @@ function loadCustomLevel() {
         });
       }
     }
-    bricksTotal = bricks.length;
+    bricksTotal = getBreakableBrickCount();
     balls = [resetBall()];
     updateUI();
     hideOverlay();
@@ -1865,7 +1918,7 @@ function startFromLevel(num) {
     balls[0].attached = false;
     console.log('[DEBUG] ball created, attached=' + balls[0].attached + ', vx=' + balls[0].vx + ', vy=' + balls[0].vy);
     setupLevel(num);
-    bricksTotal = bricks.length;
+    bricksTotal = getBreakableBrickCount();
     updateUI();
     hideOverlay();
     gameState = 'playing';
@@ -2118,7 +2171,7 @@ function update() {
   }
 
   // Level complete
-  if (bricks.every(b => !b.alive) && gameState === 'playing') {
+  if (bricks.every(b => b.indestructible || !b.alive) && gameState === 'playing') {
     const time = Math.floor(gameTime) || 1;
     const hitRate = bricksTotal > 0 ? Math.round((bricksHit / bricksTotal) * 100) : 100;
     saveHighScore(currentLevel, score);
@@ -2130,7 +2183,7 @@ function update() {
       currentLevel++;
       balls = [resetBall()];
       setupLevel(currentLevel);
-      bricksTotal = bricks.length;
+      bricksTotal = getBreakableBrickCount();
       bricksHit = 0;
       updateUI();
       hideOverlay();
@@ -2235,7 +2288,7 @@ function startGame() {
     balls[0].attached = false;
     console.log('[DEBUG] ball created, attached=' + balls[0].attached + ', vx=' + balls[0].vx + ', vy=' + balls[0].vy);
     setupLevel(1);
-    bricksTotal = bricks.length;
+    bricksTotal = getBreakableBrickCount();
     updateUI();
     hideOverlay();
     gameState = 'playing';
@@ -2263,7 +2316,7 @@ function nextLevel() {
   perfectClubs = perfectClubs; // keep if still true
   balls = [resetBall()];
   setupLevel(currentLevel);
-  bricksTotal = bricks.length;
+  bricksTotal = getBreakableBrickCount();
   bricksHit = 0;
   createPaddle();
   paddle.w = PADDLE_W_MAX;
